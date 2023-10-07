@@ -1,30 +1,5 @@
 #version 440
 
-struct Cell 
-{
-	vec4 pos;
-	vec4 vel;
-	vec4 speciesMask;
-	ivec4 speciesIndex;
-};
-
-struct Trail
-{
-	vec4 value;
-};
-
-struct SpeciesInfo
-{
-	float moveSpeed;
-	float turnSpeed;
-	float senseDistance;
-	float senseAngle;
-	int sensorSize;
-	vec4 color;
-};
-
-
-
 layout(std140, binding = 0) buffer cellsBuffer { Cell cells[]; };
 layout(std140, binding = 1) buffer trailMapBuffer { Trail trailMap[]; };
 layout(rgba8, binding = 2) uniform writeonly image2D texture;

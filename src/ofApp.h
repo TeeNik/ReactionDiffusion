@@ -22,19 +22,6 @@
 
 #define NUM_CELLS 250000
 
-//I used vec4 to keep correct memory layout of struct
-struct Cell
-{
-	glm::vec4 pos;
-	glm::vec4 vel;
-	glm::vec4 speciesMask;
-	glm::ivec4 speciesIndex {0, 0, 0, 0};
-};
-
-struct Trail
-{
-	glm::vec4 value {0,0,0,0};
-};
 
 enum SpawnMode
 {
@@ -80,15 +67,14 @@ private:
 	void loadPreset();
 	void savePreset();
 
-	ofBufferObject cellsBuffer;
-	ofBufferObject trailMapBuffer;
+	ofBufferObject mapBuffer;
+	ofBufferObject newMapBuffer;
 
-	std::vector<Cell> cells;
-	std::vector<Trail> trailMap;
+	std::vector<glm::vec4> map;
+	std::vector<glm::vec4> newMap;
 
 	ofTexture texture;
 	ofxUboShader cellsShader;
-	ofShader trailMapShader;
 	ofShader drawShader;
 
 	ofxPanel gui;

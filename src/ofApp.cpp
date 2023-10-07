@@ -25,50 +25,14 @@ void ofApp::setup()
 
 void ofApp::setupCells()
 {
-	countNumOfTeams();
-	cells.resize(NUM_CELLS);
+	map.resize(WIDTH * HEIGHT);
+	newMap.resize(WIDTH * HEIGHT);
 
-	constexpr glm::vec2 center = glm::vec2(WIDTH / 2, HEIGHT / 2);
-
-	for (Cell& cell : cells)
+	for (int i = 0; i < WIDTH * HEIGHT; ++i)
 	{
-		glm::vec2 startPos { 0, 0 };
-		float angle = ofRandomuf() * PI * 2;
-
-		SpawnMode Mode = SimSettings::GetStringToSpawnModeMap()[simSettings.SpawnMode];
-		if (Mode == Point)
-		{
-			startPos = center;
-		}
-		else if (Mode == Random)
-		{
-			startPos = { ofRandom(WIDTH), ofRandom(HEIGHT) };
-		}
-		else if (Mode == RandomCircle)
-		{
-			const float radius = ofRandomf() * HEIGHT * 0.15f;
-			startPos = center + glm::vec2{ cos(angle) * radius, sin(angle) * radius };
-		}
-		else if (Mode == CircleIn)
-		{
-			const float radius = ofRandomf() * HEIGHT * 0.49f;
-			startPos = center + glm::vec2{ cos(angle) * radius, sin(angle) * radius };
-			const glm::vec2 dir = normalize(center - startPos);
-			angle = atan2(dir.y, dir.x);
-		}
-
-		cell.pos = glm::vec4(startPos.x, startPos.y, 0, 0);
-		cell.vel = glm::vec4(angle, 0.0f, 0.0f, 0.0f);
-
-		const int team = static_cast<int>(ofRandom(0, simSettings.NumOfTeams));
-		cell.speciesMask.r = team == 0;
-		cell.speciesMask.g = team == 1;
-		cell.speciesMask.b = team == 2;
-		cell.speciesMask.a = team > 2;
-		cell.speciesIndex.r = team;
+		map[i] = glm::vec4(1, 0, 0, 1);
+		newMap[i] = glm::vec4(0, 0.5, 0.5, 1);
 	}
-
-	trailMap.resize(WIDTH * HEIGHT);
 }
 
 void ofApp::setupShaders()
@@ -76,17 +40,14 @@ void ofApp::setupShaders()
 	drawShader.setupShaderFromFile(GL_COMPUTE_SHADER, "DrawShader.glsl");
 	drawShader.linkProgram();
 
-	cellsShader.setupShaderFromFile(GL_COMPUTE_SHADER, "CellsShader.glsl");
-	cellsShader.linkProgram();
+	//cellsShader.setupShaderFromFile(GL_COMPUTE_SHADER, "CellsShader.glsl");
+	//cellsShader.linkProgram();
 
-	trailMapShader.setupShaderFromFile(GL_COMPUTE_SHADER, "TrailMapShader.glsl");
-	trailMapShader.linkProgram();
+	mapBuffer.allocate(map, GL_DYNAMIC_DRAW);
+	mapBuffer.bindBase(GL_SHADER_STORAGE_BUFFER, 0);
 
-	cellsBuffer.allocate(cells, GL_DYNAMIC_DRAW);
-	cellsBuffer.bindBase(GL_SHADER_STORAGE_BUFFER, 0);
-
-	trailMapBuffer.allocate(trailMap, GL_DYNAMIC_DRAW);
-	trailMapBuffer.bindBase(GL_SHADER_STORAGE_BUFFER, 1);
+	newMapBuffer.allocate(newMap, GL_DYNAMIC_DRAW);
+	newMapBuffer.bindBase(GL_SHADER_STORAGE_BUFFER, 1);
 
 	texture.allocate(WIDTH, HEIGHT, GL_RGBA8);
 	texture.bindAsImage(2, GL_WRITE_ONLY);
@@ -156,8 +117,8 @@ void ofApp::updateUiBySettings()
 void ofApp::reset()
 {
 	setupCells();
-	cellsBuffer.updateData(cells);
-	trailMapBuffer.updateData(trailMap);
+	mapBuffer.updateData(map);
+	newMapBuffer.updateData(newMap);
 }
 
 void ofApp::loadPreset()
@@ -200,30 +161,21 @@ void ofApp::update()
 {
 	updateSettings();
 
-	trailMapShader.begin();
-	trailMapShader.setUniform1i("width", WIDTH);
-	trailMapShader.setUniform1i("height", HEIGHT);
-	trailMapShader.setUniform1f("evaporateSpeed", simSettings.EvaporateSpeed);
-	trailMapShader.setUniform1f("diffuseSpeed", simSettings.DiffuseSpeed);
-	trailMapShader.setUniform1f("deltaTime", ofGetLastFrameTime());
-	trailMapShader.dispatchCompute((WIDTH * HEIGHT + 1024 - 1) / 1024, 1, 1);
-	trailMapShader.end();
-
-	cellsShader.begin();
-	cellsShader.setUniform1i("width", WIDTH);
-	cellsShader.setUniform1i("height", HEIGHT);
-	cellsShader.setUniform1i("numOfCells", NUM_CELLS);
-	cellsShader.setUniform1f("time", ofGetElapsedTimef());
-	cellsShader.setUniform1f("deltaTime", ofGetLastFrameTime());
-	cellsShader.setUniform1f("trailWeight", simSettings.TrailWeight);
-
-	for (int i = 0; i < MAX_SPECIES; ++i)
-	{
-		passSpeciesSettingsToShader(cellsShader, i, speciesSettings[i]);
-	}
-
-	cellsShader.dispatchCompute((cells.size() + 1024 - 1) / 1024, 1, 1);
-	cellsShader.end();
+	//cellsShader.begin();
+	//cellsShader.setUniform1i("width", WIDTH);
+	//cellsShader.setUniform1i("height", HEIGHT);
+	//cellsShader.setUniform1i("numOfCells", NUM_CELLS);
+	//cellsShader.setUniform1f("time", ofGetElapsedTimef());
+	//cellsShader.setUniform1f("deltaTime", ofGetLastFrameTime());
+	//cellsShader.setUniform1f("trailWeight", simSettings.TrailWeight);
+	//
+	//for (int i = 0; i < MAX_SPECIES; ++i)
+	//{
+	//	passSpeciesSettingsToShader(cellsShader, i, speciesSettings[i]);
+	//}
+	//
+	//cellsShader.dispatchCompute((map.size() + 1024 - 1) / 1024, 1, 1);
+	//cellsShader.end();
 
 	drawShader.begin();
 	drawShader.setUniform1i("width", WIDTH);
