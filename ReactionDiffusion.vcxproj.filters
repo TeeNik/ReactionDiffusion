@@ -161,4 +161,8 @@
   <ItemGroup>
     <ResourceCompile Include="icon.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="bin\data\DrawShader.glsl" />
+    <None Include="bin\data\CellsShader.glsl" />
+  </ItemGroup>
 </Project>

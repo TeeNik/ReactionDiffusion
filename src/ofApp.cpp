@@ -15,7 +15,7 @@ std::map<std::string, SpawnMode> SimSettings::GetStringToSpawnModeMap()
 //--------------------------------------------------------------
 void ofApp::setup()
 {
-	ofSetFrameRate(60);
+	ofSetFrameRate(2);
 	ofBackground(ofColor::black);
 
 	setupGui();
@@ -28,10 +28,48 @@ void ofApp::setupCells()
 	map.resize(WIDTH * HEIGHT);
 	newMap.resize(WIDTH * HEIGHT);
 
-	for (int i = 0; i < WIDTH * HEIGHT; ++i)
+	int x = WIDTH / 2;
+	int y = HEIGHT / 2;
+
+	ofImage image;
+	image.load("circle.jpg");
+
+
+	int a = 0;
+	for (int i = 0; i < HEIGHT; ++i)
 	{
-		map[i] = glm::vec4(1, 0, 0, 1);
-		newMap[i] = glm::vec4(0, 0.5, 0.5, 1);
+		for (int j = 0; j < WIDTH; ++j)
+		{
+			if (image.getWidth() <= i || image.getHeight() <= j)
+			{
+				map[a].r = 1;
+			}
+			else
+			{
+				ofColor color = image.getColor(i, j);
+				if (color.r > 200)
+				{
+					map[a].g = 1;
+				}
+				else
+				{
+					map[a].r = 1;
+				}
+			}
+			//map[a] = glm::vec4(float(i) / HEIGHT, float(j) / WIDTH, 0, 1);
+			++a;
+		}
+		//if (ofRandom(1) > .5f)
+		//{
+		//	map[i].x = .1f;
+		//}
+		//else
+		//{
+		//	map[i].y = .1f;
+		//}
+
+		//map[i] = glm::vec4(1, 0, 0, 1);
+		//newMap[i] = glm::vec4(0, 0.5, 0.5, 1);
 	}
 }
 
@@ -40,8 +78,8 @@ void ofApp::setupShaders()
 	drawShader.setupShaderFromFile(GL_COMPUTE_SHADER, "DrawShader.glsl");
 	drawShader.linkProgram();
 
-	//cellsShader.setupShaderFromFile(GL_COMPUTE_SHADER, "CellsShader.glsl");
-	//cellsShader.linkProgram();
+	cellsShader.setupShaderFromFile(GL_COMPUTE_SHADER, "CellsShader.glsl");
+	cellsShader.linkProgram();
 
 	mapBuffer.allocate(map, GL_DYNAMIC_DRAW);
 	mapBuffer.bindBase(GL_SHADER_STORAGE_BUFFER, 0);
@@ -161,21 +199,34 @@ void ofApp::update()
 {
 	updateSettings();
 
-	//cellsShader.begin();
-	//cellsShader.setUniform1i("width", WIDTH);
-	//cellsShader.setUniform1i("height", HEIGHT);
-	//cellsShader.setUniform1i("numOfCells", NUM_CELLS);
-	//cellsShader.setUniform1f("time", ofGetElapsedTimef());
-	//cellsShader.setUniform1f("deltaTime", ofGetLastFrameTime());
-	//cellsShader.setUniform1f("trailWeight", simSettings.TrailWeight);
-	//
-	//for (int i = 0; i < MAX_SPECIES; ++i)
-	//{
-	//	passSpeciesSettingsToShader(cellsShader, i, speciesSettings[i]);
-	//}
-	//
-	//cellsShader.dispatchCompute((map.size() + 1024 - 1) / 1024, 1, 1);
-	//cellsShader.end();
+	static bool once = true;
+
+	//if (once)
+	{
+		once = false;
+
+		cellsShader.begin();
+		cellsShader.setUniform1i("width", WIDTH);
+		cellsShader.setUniform1i("height", HEIGHT);
+		cellsShader.setUniform1i("numOfCells", NUM_CELLS);
+		cellsShader.setUniform1f("time", ofGetElapsedTimef());
+		cellsShader.setUniform1f("deltaTime", ofGetLastFrameTime());
+
+		cellsShader.setUniform1f("feedRate", .0004);
+		cellsShader.setUniform1f("killRate", .065);
+		cellsShader.setUniform1f("diffuseRateA", 1);
+		cellsShader.setUniform1f("diffuseRateB", .04f);
+		cellsShader.setUniform1i("diffuseRadius", 2);
+
+		//for (int i = 0; i < MAX_SPECIES; ++i)
+		//{
+		//	passSpeciesSettingsToShader(cellsShader, i, speciesSettings[i]);
+		//}
+
+		cellsShader.dispatchCompute((map.size() + 1024 - 1) / 1024, 1, 1);
+		cellsShader.end();
+
+	}
 
 	drawShader.begin();
 	drawShader.setUniform1i("width", WIDTH);
