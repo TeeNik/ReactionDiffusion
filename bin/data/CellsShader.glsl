@@ -1,20 +1,20 @@
 #version 440
 
-layout(std140, binding = 0) buffer cellsBuffer { Cell cells[]; };
-layout(std140, binding = 1) buffer trailMapBuffer { Trail trailMap[]; };
-layout(rgba8, binding = 2) uniform writeonly image2D texture;
+layout(std140, binding = 0) buffer mapBuffer { vec4 map[]; };
+layout(std140, binding = 1) buffer newMapBuffer { vec4 newMap[]; };
 
 layout(local_size_x = 1024, local_size_y = 1, local_size_z = 1) in;
 
 uniform int width;
 uniform int height; 
 uniform float deltaTime; 
-uniform int numOfCells;
 uniform float time;
 
-uniform float trailWeight;
-
-uniform SpeciesInfo speciesSettings[4];
+uniform float feedRate;
+uniform float killRate;
+uniform float diffuseRateA;
+uniform float diffuseRateB;
+uniform int diffuseRadius;
 
 const float PI = 3.1415;
 
@@ -41,31 +41,6 @@ float scaleToRange01(uint state)
     return state / 4294967295.0;
 }
 
-float sense(Cell cell, SpeciesInfo info, float angleOffset)
-{
-	//float angle = mod(cell.vel.x + angleOffset + 360.0f, 360.0f);
-	float angle = cell.vel.x + angleOffset;
-	vec2 dir = vec2(cos(angle), sin(angle));
-	vec2 sensePos = cell.pos.xy + dir * info.senseDistance;
-
-	float sum = 0.0f;
-	vec4 senseWeight = cell.speciesMask * 2 - 1;
-	for (int offsetX = -info.sensorSize; offsetX <= info.sensorSize; ++offsetX)
-	{
-		for (int offsetY = -info.sensorSize; offsetY <= info.sensorSize; ++offsetY)
-		{
-			int x = int(sensePos.x) + offsetX;
-			int y = int(sensePos.y) + offsetY;
-			if (x >= 0 && x < width && y >= 0 && y < height)
-			{
-				sum += dot(senseWeight, trailMap[x + y * width].value);
-			}
-		}
-	}
-
-	return sum;
-}
-
 void main()
 {
 	int i, j;
@@ -74,57 +49,43 @@ void main()
 
 	//int idx = i + j * width;
 	int idx = i;
+	ivec2 id = ivec2(i, j);
 
-	Cell cell = cells[idx];
-	float angle = cell.vel.x;
+	vec2 currentValues = map[idx].xy;
+	float a = currentValues.x;
+	float b = currentValues.y;
 
-	SpeciesInfo info = speciesSettings[cell.speciesIndex.x];
-
-	//sense
-	float senseAngleRad = info.senseAngle * (PI / 180);
-	float forward = sense(cell, info, 0.0f);
-	float left = sense(cell, info, senseAngleRad);
-	float right = sense(cell, info, -senseAngleRad);
-	
-	uint rand = hash(uint(cell.pos.y * width + cell.pos.x + hash(uint(idx + time + 100000))));
-	float steer = scaleToRange01(rand); 
-	float turnSpeed = info.turnSpeed * 2 * PI * deltaTime;
-	
-	if (forward > left && forward > right)
-	{
-		angle += 0;
-	}
-	else if (forward < left && forward < right)
-	{
-		angle += (steer - 0.5) * 2 * turnSpeed;
-	}
-	else if (right > left)
-	{
-		angle -= steer * turnSpeed;
-	}
-	else if (left > right)
-	{
-		angle += steer * turnSpeed;
+	vec2 sum = vec2(0,0);
+	float weightSum;
+	for (int offsetY = -diffuseRadius; offsetY <= diffuseRadius; offsetY ++) {
+		for (int offsetX = -diffuseRadius; offsetX <= diffuseRadius; offsetX ++) {
+			if (offsetX == 0 && offsetY == 0) {
+				continue;
+			}
+			ivec2 samplePos = id.xy + ivec2(offsetX, offsetY);
+			samplePos = min(ivec2(width-1, height-1), max(ivec2(0,0), samplePos));
+			float sqrDst = float(offsetX * offsetX + offsetY * offsetY);
+			
+			if (sqrDst <= diffuseRadius * diffuseRadius) {
+				float weight = 1.0 / sqrt(sqrDst);
+				sum += map[samplePos.x + samplePos.y * width].xy * weight;
+				weightSum += weight;
+			}
+		}
 	}
 
-	vec2 dir = vec2(cos(angle), sin(angle));
-	vec2 newPos = cell.pos.xy + dir * info.moveSpeed * deltaTime;
+	vec2 diffuseStrength = sum / weightSum - currentValues;
 
-	if (newPos.x < 0 || newPos.x > width - 1 || newPos.y < 0 || newPos.y > height - 1)
-	{
-		rand = hash(rand);
-		float randomAngle = scaleToRange01(rand) * 2 * PI;
+	//newMap[idx] = vec4(sum.x, sum.y, 0, 1);
+	//return;
 
-		newPos.x = min(width - 1, max(0, newPos.x));
-		newPos.y = min(height - 1, max(0, newPos.y));
-		//angle = mod(angle + 60, 360.0f);
-		angle = randomAngle;
-	}
 
-	cells[idx].pos.xy = newPos;
-	cells[idx].vel.x = angle;
+	float deltaA = (diffuseRateA * diffuseStrength.x - a * b * b + feedRate * (1-a));
+	float newA = a + deltaA;
 
-	int posIdx = int(newPos.x) + int(newPos .y) * width;
-	vec4 trailValue = trailMap[posIdx].value;
-	trailMap[posIdx].value = min(vec4(1.0f), trailValue + cell.speciesMask * vec4(trailWeight * deltaTime));
+	float deltaB = (diffuseRateB * diffuseStrength.y + a * b * b - (killRate + feedRate) * b);
+	float newB = b + deltaB;
+
+	newMap[idx] = vec4(max(0, newA), min(newB, 1), deltaA, deltaB);
+	//newMap[idx] = map[idx];
 }
