@@ -16,8 +16,8 @@
 #define SCREEN_HEIGHT TEXTURE_HEIGHT
 
 //If WIDTH and HEIGHT are smaller that texture size, image will be pixelated
-#define WIDTH 128
-#define HEIGHT 72
+#define WIDTH 1280
+#define HEIGHT 720
 #define RADIUS (HEIGHT / 2)
 
 #define NUM_CELLS 250000

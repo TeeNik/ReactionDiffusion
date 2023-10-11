@@ -15,7 +15,7 @@ std::map<std::string, SpawnMode> SimSettings::GetStringToSpawnModeMap()
 //--------------------------------------------------------------
 void ofApp::setup()
 {
-	ofSetFrameRate(2);
+	ofSetFrameRate(60);
 	ofBackground(ofColor::black);
 
 	setupGui();
@@ -32,7 +32,8 @@ void ofApp::setupCells()
 	int y = HEIGHT / 2;
 
 	ofImage image;
-	image.load("circle.jpg");
+	image.load("circle_big.jpg");
+	//image.load("circle.jpg");
 
 
 	int a = 0;
@@ -40,21 +41,25 @@ void ofApp::setupCells()
 	{
 		for (int j = 0; j < WIDTH; ++j)
 		{
-			if (image.getWidth() <= i || image.getHeight() <= j)
+			if (image.getWidth() <= j || image.getHeight() <= i)
 			{
 				map[a].r = 1;
 			}
 			else
 			{
-				ofColor color = image.getColor(i, j);
-				if (color.r > 200)
-				{
-					map[a].g = 1;
-				}
-				else
-				{
-					map[a].r = 1;
-				}
+				ofColor color = image.getColor(j, i);
+
+				map[a].r = 1;
+				map[a].g = (color.r > 200) ? 1 : 0;
+
+				//if (color.r > 200)
+				//{
+				//	map[a].g = 1;
+				//}
+				//else
+				//{
+				//	map[a].r = 1;
+				//}
 			}
 			//map[a] = glm::vec4(float(i) / HEIGHT, float(j) / WIDTH, 0, 1);
 			++a;
@@ -212,18 +217,21 @@ void ofApp::update()
 		cellsShader.setUniform1f("time", ofGetElapsedTimef());
 		cellsShader.setUniform1f("deltaTime", ofGetLastFrameTime());
 
-		cellsShader.setUniform1f("feedRate", .0004);
-		cellsShader.setUniform1f("killRate", .065);
-		cellsShader.setUniform1f("diffuseRateA", 1);
-		cellsShader.setUniform1f("diffuseRateB", .04f);
-		cellsShader.setUniform1i("diffuseRadius", 2);
+		cellsShader.setUniform1f("feedRate", 0.03);
+		cellsShader.setUniform1f("killRate", 0.06);
+		cellsShader.setUniform1f("diffuseRateA", 1.);
+		cellsShader.setUniform1f("diffuseRateB", 0.1);
+		cellsShader.setUniform1i("diffuseRadius", 10);
 
 		//for (int i = 0; i < MAX_SPECIES; ++i)
 		//{
 		//	passSpeciesSettingsToShader(cellsShader, i, speciesSettings[i]);
 		//}
 
-		cellsShader.dispatchCompute((map.size() + 1024 - 1) / 1024, 1, 1);
+		int numGroupsX = ceil(WIDTH / 8.0f);
+		int numGroupsY = ceil(HEIGHT / 8.0f);
+
+		cellsShader.dispatchCompute(numGroupsX, numGroupsY, 1);
 		cellsShader.end();
 
 	}
