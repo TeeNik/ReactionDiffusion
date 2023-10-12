@@ -3,7 +3,7 @@
 layout(std140, binding = 0) buffer mapBuffer { vec4 map[]; };
 layout(std140, binding = 1) buffer newMapBuffer { vec4 newMap[]; };
 
-layout(local_size_x = 1024, local_size_y = 1, local_size_z = 1) in;
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
 uniform int width;
 uniform int height; 
@@ -47,14 +47,24 @@ void main()
 	i = int(gl_GlobalInvocationID.x);
 	j = int(gl_GlobalInvocationID.y);
 
-	//int idx = i + j * width;
-	int idx = i;
+	if (i >= width || j >= height) {
+		return;
+	}
+
 	ivec2 id = ivec2(i, j);
+	vec2 uv = vec2(id.x/float(width-1.0), id.y / float(height-1.0));
+
+	int idx = i + j * width;
+	//int idx = i;
+
+	//newMap[idx] = vec4(uv.x, uv.y, 0, 0);
+	//newMap[idx] = map[idx];
+	//return;
 
 	vec2 currentValues = map[idx].xy;
 	float a = currentValues.x;
 	float b = currentValues.y;
-
+	
 	vec2 sum = vec2(0,0);
 	float weightSum;
 	for (int offsetY = -diffuseRadius; offsetY <= diffuseRadius; offsetY ++) {
@@ -62,23 +72,19 @@ void main()
 			if (offsetX == 0 && offsetY == 0) {
 				continue;
 			}
-			ivec2 samplePos = id.xy + ivec2(offsetX, offsetY);
-			samplePos = min(ivec2(width-1, height-1), max(ivec2(0,0), samplePos));
+			vec2 samplePos = id.xy + vec2(offsetX, offsetY);
+			samplePos = min(vec2(width-1, height-1), max(vec2(0,0), samplePos));
 			float sqrDst = float(offsetX * offsetX + offsetY * offsetY);
 			
 			if (sqrDst <= diffuseRadius * diffuseRadius) {
 				float weight = 1.0 / sqrt(sqrDst);
-				sum += map[samplePos.x + samplePos.y * width].xy * weight;
+				sum += map[int(samplePos.x + samplePos.y * width)].xy * weight;
 				weightSum += weight;
 			}
 		}
 	}
 
 	vec2 diffuseStrength = sum / weightSum - currentValues;
-
-	//newMap[idx] = vec4(sum.x, sum.y, 0, 1);
-	//return;
-
 
 	float deltaA = (diffuseRateA * diffuseStrength.x - a * b * b + feedRate * (1-a));
 	float newA = a + deltaA;

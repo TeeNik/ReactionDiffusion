@@ -19,6 +19,7 @@ void main()
 	map[idx] = newMap[idx];
 
 	vec4 color = newMap[idx];
+	color.z = 0.0f;
 	color.a = 1.0f;
 
 	//vec4 color = vec4(0);
