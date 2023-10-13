@@ -1,7 +1,7 @@
 #include "ofApp.h"
 #include "PresetManager.h"
 
-std::map<std::string, SpawnMode> SimSettings::GetStringToSpawnModeMap()
+std::map<std::string, SpawnMode> SimSettings::GetStringToDisplayModeMap()
 {
 	static std::map<std::string, enum SpawnMode> StringToSpawnModeMap = {
 	{"Point", Point},
@@ -15,7 +15,7 @@ std::map<std::string, SpawnMode> SimSettings::GetStringToSpawnModeMap()
 //--------------------------------------------------------------
 void ofApp::setup()
 {
-	ofSetFrameRate(60);
+	ofSetFrameRate(2*60);
 	ofBackground(ofColor::black);
 
 	setupGui();
@@ -108,53 +108,44 @@ void ofApp::setupGui()
 	gui.add(savePresetButton.setup("Save Preset"));
 	gui.add(presetNameText.setup("Preset Name", "preset"));
 
-	gui.add(evaporationSpeedSlider.setup("Evaporation Speed", simSettings.EvaporateSpeed, 0.0f, 2));
-	gui.add(diffuseSpeedSlider.setup("Diffuse", simSettings.DiffuseSpeed, 0, 50));
-	gui.add(trailWeightSlider.setup("Trail Weight", simSettings.TrailWeight, 0, 20));
+	gui.add(feedRateSlider.setup("Feed Rate", simSettings.FeedRate, 0.0f, 2));
+	gui.add(killRateSlider.setup("Kill Rate", simSettings.KillRate, 0, 50));
+	gui.add(diffuseRateASlider.setup("Diffuse Rate A", simSettings.DiffuseRateA, 0, 20));
+	gui.add(diffuseRateBSlider.setup("Diffuse Rate B", simSettings.DiffuseRateB, 0, 20));
+	gui.add(diffuseRadiusSlider.setup("Diffuse Radius", simSettings.DiffuseRadius, 0, 20));
 
-	gui.add(spawnModeList.setup("Spawn Mode"));
-	spawnModeList.setDropDownPosition(ofxDropdown_<std::basic_string<char>>::DD_LEFT);
-	spawnModeList.disableMultipleSelection();
-	spawnModeList.enableCollapseOnSelection();
-	for (auto& item : SimSettings::GetStringToSpawnModeMap())
+	gui.add(displayModeList.setup("Display Mode"));
+	displayModeList.setDropDownPosition(ofxDropdown_<std::basic_string<char>>::DD_LEFT);
+	displayModeList.disableMultipleSelection();
+	displayModeList.enableCollapseOnSelection();
+	for (auto& item : SimSettings::GetStringToDisplayModeMap())
 	{
-		spawnModeList.add(item.first);
+		displayModeList.add(item.first);
 	}
-	spawnModeList.setSelectedValueByIndex(0, false);
+	displayModeList.setSelectedValueByIndex(0, false);
 
-	for (int i = 0; i < MAX_SPECIES; ++i)
-	{
-		speciesSettingsGUI[i].setup(gui, speciesSettings[i], i);
-	}
-
-	ofSetWindowTitle("Slime Mold");
+	ofSetWindowTitle("Reaction Diffusion");
 	gui.setPosition(ofGetWidth() - GUI_WIDTH, 10);
 }
 
 void ofApp::updateSettings()
 {
-	simSettings.EvaporateSpeed = evaporationSpeedSlider;
-	simSettings.DiffuseSpeed = diffuseSpeedSlider;
-	simSettings.TrailWeight = trailWeightSlider;
-	simSettings.SpawnMode = spawnModeList.selectedValue;
-
-	for (int i = 0; i < MAX_SPECIES; ++i)
-	{
-		speciesSettingsGUI[i].updateInfo(speciesSettings[i]);
-	}
+	simSettings.FeedRate = feedRateSlider;
+	simSettings.KillRate = killRateSlider;
+	simSettings.DiffuseRateA = diffuseRateASlider;
+	simSettings.DiffuseRateB = diffuseRateBSlider;
+	simSettings.DiffuseRadius = diffuseRadiusSlider;
+	simSettings.DisplayMode = displayModeList.selectedValue;
 }
 
 void ofApp::updateUiBySettings()
 {
-	evaporationSpeedSlider = simSettings.EvaporateSpeed;
-	diffuseSpeedSlider = simSettings.DiffuseSpeed;
-	trailWeightSlider = simSettings.TrailWeight;
-	spawnModeList.setSelectedValueByName(simSettings.SpawnMode, false);
-
-	for (int i = 0; i < MAX_SPECIES; ++i)
-	{
-		speciesSettingsGUI[i].loadInfo(speciesSettings[i]);
-	}
+	feedRateSlider = simSettings.FeedRate;
+	killRateSlider = simSettings.KillRate;
+	diffuseRateASlider = simSettings.DiffuseRateA;
+	diffuseRateBSlider = simSettings.DiffuseRateB;
+	diffuseRadiusSlider = simSettings.DiffuseRadius;
+	displayModeList.setSelectedValueByName(simSettings.DisplayMode, false);
 }
 
 void ofApp::reset()
@@ -175,30 +166,6 @@ void ofApp::savePreset()
 	PresetManager::savePreset(presetNameText, simSettings, speciesSettings);
 }
 
-void ofApp::passSpeciesSettingsToShader(ofShader& shader, int speciesIndex, const SpeciesInfo& info)
-{
-	const std::string name = "speciesSettings[" + std::to_string(speciesIndex) + "].";
-	shader.setUniform1f(name + "moveSpeed", info.moveSpeed);
-	shader.setUniform1f(name + "turnSpeed", info.turnSpeed);
-	shader.setUniform1f(name + "senseDistance", info.senseDistance);
-	shader.setUniform1f(name + "senseAngle", info.senseAngle);
-	shader.setUniform1i(name + "sensorSize", info.sensorSize);
-	shader.setUniform4f(name + "color", info.color);
-}
-
-void ofApp::countNumOfTeams()
-{
-	int num = 0;
-	for (auto& species : speciesSettingsGUI)
-	{
-		if (species.isActive())
-		{
-			++num;
-		}
-	}
-	simSettings.NumOfTeams = num;
-}
-
 //--------------------------------------------------------------
 void ofApp::update()
 {
@@ -217,16 +184,11 @@ void ofApp::update()
 		cellsShader.setUniform1f("time", ofGetElapsedTimef());
 		cellsShader.setUniform1f("deltaTime", ofGetLastFrameTime());
 
-		cellsShader.setUniform1f("feedRate", 0.03);
-		cellsShader.setUniform1f("killRate", 0.06);
-		cellsShader.setUniform1f("diffuseRateA", 1.);
-		cellsShader.setUniform1f("diffuseRateB", 0.1);
-		cellsShader.setUniform1i("diffuseRadius", 10);
-
-		//for (int i = 0; i < MAX_SPECIES; ++i)
-		//{
-		//	passSpeciesSettingsToShader(cellsShader, i, speciesSettings[i]);
-		//}
+		cellsShader.setUniform1f("feedRate", simSettings.FeedRate);
+		cellsShader.setUniform1f("killRate", simSettings.KillRate);
+		cellsShader.setUniform1f("diffuseRateA", simSettings.DiffuseRateA);
+		cellsShader.setUniform1f("diffuseRateB", simSettings.DiffuseRateB);
+		cellsShader.setUniform1i("diffuseRadius", simSettings.DiffuseRadius);
 
 		int numGroupsX = ceil(WIDTH / 8.0f);
 		int numGroupsY = ceil(HEIGHT / 8.0f);
@@ -239,12 +201,6 @@ void ofApp::update()
 	drawShader.begin();
 	drawShader.setUniform1i("width", WIDTH);
 	drawShader.setUniform1i("height", HEIGHT);
-
-	for (int i = 0; i < MAX_SPECIES; ++i)
-	{
-		passSpeciesSettingsToShader(drawShader, i, speciesSettings[i]);
-	}
-
 	drawShader.dispatchCompute(WIDTH / 1, HEIGHT / 1, 1);
 	drawShader.end();
 }

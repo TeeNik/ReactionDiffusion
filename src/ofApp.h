@@ -33,13 +33,13 @@ enum SpawnMode
 
 struct SimSettings
 {
-	float EvaporateSpeed = 0.25f;
-	float DiffuseSpeed = 10.0f;
-	float TrailWeight = 1.0f;
-	std::string SpawnMode = "CircleIn";
-	int NumOfTeams = 1;
+	float FeedRate = 0.545f;
+	float KillRate = 0.062f;
+	float DiffuseRateA = 1.0f;
+	float DiffuseRateB = 0.5f;
+	std::string DisplayMode = "CircleIn";
 
-	static std::map<std::string, enum SpawnMode> GetStringToSpawnModeMap();
+	static std::map<std::string, enum SpawnMode> GetStringToDisplayModeMap();
 };
 
 class ofApp : public ofBaseApp{
@@ -58,7 +58,6 @@ private:
 	void setupShaders();
 	void setupGui();
 	void passSpeciesSettingsToShader(ofShader& shader, int speciesIndex, const SpeciesInfo& info);
-	void countNumOfTeams();
 
 	void updateSettings();
 	void updateUiBySettings();
@@ -83,12 +82,11 @@ private:
 	ofxButton savePresetButton;
 	ofxTextField presetNameText;
 
-	ofxFloatSlider evaporationSpeedSlider;
-	ofxFloatSlider diffuseSpeedSlider;
-	ofxFloatSlider trailWeightSlider;
+	ofxFloatSlider feedRateSlider;
+	ofxFloatSlider killRateSlider;
+	ofxFloatSlider diffuseRateASlider;
+	ofxFloatSlider diffuseRateBSlider;
 	ofxDropdown spawnModeList;
 
 	SimSettings simSettings;
-	SpeciesInfoUIGroup speciesSettingsGUI[MAX_SPECIES];
-	SpeciesInfo speciesSettings[MAX_SPECIES];
 };
