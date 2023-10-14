@@ -12,8 +12,8 @@ using std::string;
 class PresetManager
 {
 public:
-	static void savePreset(const string& presetName, const SimSettings& simSettings, const SpeciesInfo* speciesSettings);
-	static void loadPreset(const string& presetName, SimSettings& simSettings, SpeciesInfo* speciesSettings);
+	static void savePreset(const string& presetName, const SimSettings& simSettings);
+	static void loadPreset(const string& presetName, SimSettings& simSettings);
 
 };
 
