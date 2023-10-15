@@ -157,13 +157,13 @@ void ofApp::reset()
 
 void ofApp::loadPreset()
 {
-	PresetManager::loadPreset(presetNameText, simSettings, speciesSettings);
+	PresetManager::loadPreset(presetNameText, simSettings);
 	updateUiBySettings();
 }
 
 void ofApp::savePreset()
 {
-	PresetManager::savePreset(presetNameText, simSettings, speciesSettings);
+	PresetManager::savePreset(presetNameText, simSettings);
 }
 
 //--------------------------------------------------------------

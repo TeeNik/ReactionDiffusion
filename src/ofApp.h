@@ -33,10 +33,11 @@ enum SpawnMode
 
 struct SimSettings
 {
-	float FeedRate = 0.545f;
+	float FeedRate = 0.0545f;
 	float KillRate = 0.062f;
 	float DiffuseRateA = 1.0f;
 	float DiffuseRateB = 0.5f;
+	int DiffuseRadius = 6;
 	std::string DisplayMode = "CircleIn";
 
 	static std::map<std::string, enum SpawnMode> GetStringToDisplayModeMap();
@@ -57,7 +58,6 @@ private:
 	void setupCells();
 	void setupShaders();
 	void setupGui();
-	void passSpeciesSettingsToShader(ofShader& shader, int speciesIndex, const SpeciesInfo& info);
 
 	void updateSettings();
 	void updateUiBySettings();
@@ -86,7 +86,8 @@ private:
 	ofxFloatSlider killRateSlider;
 	ofxFloatSlider diffuseRateASlider;
 	ofxFloatSlider diffuseRateBSlider;
-	ofxDropdown spawnModeList;
+	ofxIntSlider diffuseRadiusSlider;
+	ofxDropdown displayModeList;
 
 	SimSettings simSettings;
 };
