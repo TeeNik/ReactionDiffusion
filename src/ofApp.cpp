@@ -108,11 +108,11 @@ void ofApp::setupGui()
 	gui.add(savePresetButton.setup("Save Preset"));
 	gui.add(presetNameText.setup("Preset Name", "preset"));
 
-	gui.add(feedRateSlider.setup("Feed Rate", simSettings.FeedRate, 0.0f, 2));
-	gui.add(killRateSlider.setup("Kill Rate", simSettings.KillRate, 0, 50));
-	gui.add(diffuseRateASlider.setup("Diffuse Rate A", simSettings.DiffuseRateA, 0, 20));
-	gui.add(diffuseRateBSlider.setup("Diffuse Rate B", simSettings.DiffuseRateB, 0, 20));
-	gui.add(diffuseRadiusSlider.setup("Diffuse Radius", simSettings.DiffuseRadius, 0, 20));
+	gui.add(feedRateSlider.setup("Feed Rate", simSettings.FeedRate, 0.0f, 0.1f));
+	gui.add(killRateSlider.setup("Kill Rate", simSettings.KillRate, 0.0f, 0.1f));
+	gui.add(diffuseRateASlider.setup("Diffuse Rate A", simSettings.DiffuseRateA, 0.0f, 1.0f));
+	gui.add(diffuseRateBSlider.setup("Diffuse Rate B", simSettings.DiffuseRateB, 0.0f, 1.0f));
+	gui.add(diffuseRadiusSlider.setup("Diffuse Radius", simSettings.DiffuseRadius, 0, 10));
 
 	gui.add(displayModeList.setup("Display Mode"));
 	displayModeList.setDropDownPosition(ofxDropdown_<std::basic_string<char>>::DD_LEFT);

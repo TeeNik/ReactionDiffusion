@@ -4,8 +4,6 @@
 #include "ofxGui.h"
 #include "ofxUbo.h"
 #include "ofxDropdown.h"
-#include "SpeciesInfoUIGroup.h"
-#include "SpeciesSettings.h"
 
 #define TEXTURE_WIDTH 1280
 #define TEXTURE_HEIGHT 720
