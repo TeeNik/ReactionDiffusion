@@ -16,7 +16,7 @@ void main()
 	j = int(gl_GlobalInvocationID.y);
 
 	int idx = i + j * width;
-	map[idx] = newMap[idx];
+	//map[idx] = newMap[idx];
 
 	vec4 color = newMap[idx];
 	color.z = 0.0f;

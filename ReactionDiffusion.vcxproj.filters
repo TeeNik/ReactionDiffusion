@@ -51,8 +51,6 @@
     </ClCompile>
     <ClCompile Include="src\ofxUbo.cpp" />
     <ClCompile Include="src\PresetManager.cpp" />
-    <ClCompile Include="src\SpeciesInfoUIGroup.cpp" />
-    <ClCompile Include="src\SpeciesSettings.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -153,10 +151,8 @@
     <ClInclude Include="..\..\..\addons\ofxJSON\libs\jsoncpp\include\json\json.h">
       <Filter>addons\ofxJSON\libs\jsoncpp\include\json</Filter>
     </ClInclude>
-    <ClInclude Include="src\SpeciesSettings.h" />
     <ClInclude Include="src\ofxUbo.h" />
     <ClInclude Include="src\PresetManager.h" />
-    <ClInclude Include="src\SpeciesInfoUIGroup.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="icon.rc" />
@@ -164,5 +160,6 @@
   <ItemGroup>
     <None Include="bin\data\DrawShader.glsl" />
     <None Include="bin\data\CellsShader.glsl" />
+    <None Include="bin\data\CopyShader.glsl" />
   </ItemGroup>
 </Project>
