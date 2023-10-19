@@ -19,8 +19,12 @@ void main()
 	//map[idx] = newMap[idx];
 
 	vec4 color = newMap[idx];
-	color.z = 0.0f;
+	color.x = 1.0f - newMap[idx].x - newMap[idx].y;
+	color.y = 1.0f - newMap[idx].x - newMap[idx].y;
+	color.z = 1.0f - newMap[idx].x - newMap[idx].y;
 	color.a = 1.0f;
+
+	color.xyz *= 2;
 
 	//vec4 color = vec4(0);
 	//for (uint i = 0; i < 4; ++i) {

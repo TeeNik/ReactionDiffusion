@@ -15,7 +15,7 @@ std::map<std::string, SpawnMode> SimSettings::GetStringToDisplayModeMap()
 //--------------------------------------------------------------
 void ofApp::setup()
 {
-	ofSetFrameRate(2*60);
+	ofSetFrameRate(60);
 	ofBackground(ofColor::black);
 
 	setupGui();
@@ -80,6 +80,9 @@ void ofApp::setupCells()
 
 void ofApp::setupShaders()
 {
+	copyShader.setupShaderFromFile(GL_COMPUTE_SHADER, "CopyShader.glsl");
+	copyShader.linkProgram();
+
 	drawShader.setupShaderFromFile(GL_COMPUTE_SHADER, "DrawShader.glsl");
 	drawShader.linkProgram();
 
@@ -112,7 +115,8 @@ void ofApp::setupGui()
 	gui.add(killRateSlider.setup("Kill Rate", simSettings.KillRate, 0.0f, 0.1f));
 	gui.add(diffuseRateASlider.setup("Diffuse Rate A", simSettings.DiffuseRateA, 0.0f, 1.0f));
 	gui.add(diffuseRateBSlider.setup("Diffuse Rate B", simSettings.DiffuseRateB, 0.0f, 1.0f));
-	gui.add(diffuseRadiusSlider.setup("Diffuse Radius", simSettings.DiffuseRadius, 0, 10));
+	gui.add(diffuseRadiusSlider.setup("Diffuse Radius", simSettings.DiffuseRadius, 1, 10));
+	gui.add(stepsPerFrameSlider.setup("Steps Per Frame", simSettings.StepsPerFrame, 1, 10));
 
 	gui.add(displayModeList.setup("Display Mode"));
 	displayModeList.setDropDownPosition(ofxDropdown_<std::basic_string<char>>::DD_LEFT);
@@ -135,6 +139,7 @@ void ofApp::updateSettings()
 	simSettings.DiffuseRateA = diffuseRateASlider;
 	simSettings.DiffuseRateB = diffuseRateBSlider;
 	simSettings.DiffuseRadius = diffuseRadiusSlider;
+	simSettings.StepsPerFrame = stepsPerFrameSlider;
 	simSettings.DisplayMode = displayModeList.selectedValue;
 }
 
@@ -145,6 +150,7 @@ void ofApp::updateUiBySettings()
 	diffuseRateASlider = simSettings.DiffuseRateA;
 	diffuseRateBSlider = simSettings.DiffuseRateB;
 	diffuseRadiusSlider = simSettings.DiffuseRadius;
+	stepsPerFrameSlider = simSettings.StepsPerFrame;
 	displayModeList.setSelectedValueByName(simSettings.DisplayMode, false);
 }
 
@@ -173,7 +179,7 @@ void ofApp::update()
 
 	static bool once = true;
 
-	//if (once)
+	for (int i = 0; i < simSettings.StepsPerFrame; ++i)
 	{
 		once = false;
 
@@ -196,6 +202,11 @@ void ofApp::update()
 		cellsShader.dispatchCompute(numGroupsX, numGroupsY, 1);
 		cellsShader.end();
 
+		copyShader.begin();
+		copyShader.setUniform1i("width", WIDTH);
+		copyShader.setUniform1i("height", HEIGHT);
+		copyShader.dispatchCompute(WIDTH / 1, HEIGHT / 1, 1);
+		copyShader.end();
 	}
 
 	drawShader.begin();

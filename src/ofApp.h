@@ -36,6 +36,7 @@ struct SimSettings
 	float DiffuseRateA = 1.0f;
 	float DiffuseRateB = 0.5f;
 	int DiffuseRadius = 6;
+	int StepsPerFrame = 6;
 	std::string DisplayMode = "CircleIn";
 
 	static std::map<std::string, enum SpawnMode> GetStringToDisplayModeMap();
@@ -71,7 +72,8 @@ private:
 	std::vector<glm::vec4> newMap;
 
 	ofTexture texture;
-	ofxUboShader cellsShader;
+	ofShader cellsShader;
+	ofShader copyShader;
 	ofShader drawShader;
 
 	ofxPanel gui;
@@ -85,6 +87,7 @@ private:
 	ofxFloatSlider diffuseRateASlider;
 	ofxFloatSlider diffuseRateBSlider;
 	ofxIntSlider diffuseRadiusSlider;
+	ofxIntSlider stepsPerFrameSlider;
 	ofxDropdown displayModeList;
 
 	SimSettings simSettings;
