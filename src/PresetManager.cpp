@@ -25,6 +25,7 @@ void PresetManager::savePreset(const string& presetName, const SimSettings& simS
 	json["DiffuseRateA"] = simSettings.DiffuseRateA;
 	json["DiffuseRateB"] = simSettings.DiffuseRateB;
 	json["DiffuseRadius"] = simSettings.DiffuseRadius;
+	json["StepsPerFrame"] = simSettings.StepsPerFrame;
 	json["DisplayMode"] = simSettings.DisplayMode;
 
 	bool result = json.save(filePath);
@@ -50,5 +51,6 @@ void PresetManager::loadPreset(const string& presetName, SimSettings& simSetting
 	simSettings.DiffuseRateA = json["DiffuseRateA"].asFloat();
 	simSettings.DiffuseRateB = json["DiffuseRateB"].asFloat();
 	simSettings.DiffuseRadius = json["DiffuseRadius"].asInt();
+	simSettings.StepsPerFrame = json["StepsPerFrame"].asInt();
 	simSettings.DisplayMode = json["DisplayMode"].asString();
 }
